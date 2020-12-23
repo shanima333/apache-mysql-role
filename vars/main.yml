@@ -1,0 +1,11 @@
+---
+
+httpd_port: 80
+httpd_domain: www.shani.com
+httpd_owner: apache
+httpd_group: apache
+
+mysql_root_password: "admin123"
+mysql_db_user: "wpuser"
+mysql_db_password: "wpuser123"
+mysql_extra_database: "wordpress"

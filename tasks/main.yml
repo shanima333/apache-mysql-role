@@ -1,0 +1,83 @@
+---
+
+- name: "Install apache and php service"
+  yum:
+    name:
+     - httpd
+     - php
+     - php-mysql
+    state: present
+  notify:
+   - restart-apache  
+
+- name: "Update apache configuration file"
+  template:
+    src: httpd.conf.tmpl
+    dest: /etc/httpd/conf/httpd.conf
+    owner: "{{ httpd_owner }}"
+    group: "{{ httpd_group }}"
+  notify:
+   - restart-apache  
+
+- name: "Update Vhost file"
+  template:
+    src: vhost.tmpl
+    dest: "/etc/httpd/conf.d/{{ httpd_domain }}.conf"
+    owner: "{{ httpd_owner }}"
+    group: "{{ httpd_group }}"
+  notify:
+  - restart-apache  
+
+- name: "Create website document root"
+  file:
+    path: "/var/www/html/{{httpd_domain}}"
+    state: directory
+    owner: "{{ httpd_owner }}"
+    group: "{{ httpd_group }}"
+
+- name: "Install Mariadb server"
+  yum:
+    name:
+      - mariadb-server
+      - MySQL-python
+    state: present
+      
+- name: "Restart/Enable service"
+  service:
+    name: mariadb
+    state: restarted
+    enabled: true
+      
+- name: "Root Password reset"
+  ignore_errors: true
+  mysql_user:
+    login_user: "root"
+    login_password: ""
+    name: "root"
+    password: "{{ mysql_root_password }}"
+    host_all: true
+      
+      
+- name: "Maridb-Server - Removing Anonymous User"
+  mysql_user:
+    login_user: "root"
+    login_password: "{{ mysql_root_password }}"
+    name: ""
+    host_all: true
+    state: absent
+      
+- name: "Mariadb-Server - Creating Extra Database"
+  mysql_db:
+    login_user: "root"
+    login_password: "{{ mysql_root_password }}"
+    name: "{{ mysql_extra_database }}"
+    state: present
+      
+- name: "Mariadb-Server - Creating Extra User & Password"
+  mysql_user:
+    login_user: "root"
+    login_password: "{{ mysql_root_password }}"
+    name: "{{ mysql_db_user }}"
+    password: "{{ mysql_db_password }}"
+    state: present
+    priv: "{{ mysql_extra_database }}.*:ALL"
